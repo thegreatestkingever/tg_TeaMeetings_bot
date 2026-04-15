@@ -4,9 +4,6 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-print("=== СТАРТ ===")
-print("TOKEN есть:", bool(TOKEN))
-
 if not TOKEN:
     raise ValueError("BOT_TOKEN не найден")
 
@@ -14,13 +11,14 @@ users_data = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Отправь варианты дат и времени, например:\n11.04 15,16\n12.04 14"
+        "Отправь варианты дат и времени, например:\n"
+        "11.04 15,16\n"
+        "12.04 14"
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = update.message.text
-
     slots = set()
 
     for line in text.split("\n"):
@@ -29,7 +27,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             date = parts[0]
             times = parts[1].split(",")
             for t in times:
-                slots.add(f"{date} {t}")
+                t = t.strip()
+                if t:
+                    slots.add(f"{date} {t}")
 
     users_data[user_id] = slots
     await update.message.reply_text("Принято")
@@ -56,7 +56,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("Бот запущен...")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
-if __name__ == "__main__":
+if name == "main":
     main()
