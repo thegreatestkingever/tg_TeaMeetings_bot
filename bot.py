@@ -1,89 +1,105 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+import os
+from collections import Counter
 
-TOKEN = os.getenv("BOT_TOKEN")
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+
+TOKEN = os.getenv("8344701601:AAFT9xdoZ1epxzeCoS7ynQe074GnjIGd-so")
 if not TOKEN:
-    raise ValueError("BOT_TOKEN не найден в переменных окружения")
+    raise ValueError("8344701601:AAFT9xdoZ1epxzeCoS7ynQe074GnjIGd-so не найден в переменных окружения")
 
 users_data = {}
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
-        "Привет! Отправь даты в формате:\n\n"
+        "Привет!\n\n"
+        "Отправь даты и часы в таком формате:\n"
         "11.04: 15, 16\n"
-        "12.04: 18"
+        "12.04: 18\n\n"
+        "Потом напиши /result"
     )
 
-def parse_input(text):
+
+def parse_input(text: str) -> set[tuple[str, int]]:
     result = set()
-    lines = text.split("\n")
+    lines = text.splitlines()
 
     for line in lines:
-        if ":" in line:
-            date_part, time_part = line.split(":", 1)
-            date = date_part.strip()
-            times = time_part.split(",")
+        line = line.strip()
+        if not line or ":" not in line:
+            continue
 
-            for t in times:
-                t = t.strip()
-                if t.isdigit():
-                    hour = int(t)
-                    if 0 <= hour <= 23:
-                        result.add((date, hour))
+        date_part, time_part = line.split(":", 1)
+        date_part = date_part.strip()
+        time_part = time_part.strip()
+
+        if not date_part or not time_part:
+            continue
+
+        times = [t.strip() for t in time_part.split(",")]
+
+        for t in times:
+            if t.isdigit():
+                hour = int(t)
+                if 0 <= hour <= 23:
+                    result.add((date_part, hour))
 
     return result
 
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message or not update.message.text:
+        return
+
     user_id = update.message.from_user.id
-    text = update.message.text
+    text = update.message.text.strip()
 
     slots = parse_input(text)
 
     if not slots:
-        await update.message.reply_text("Не поняла формат. Пример:\n11.04: 15, 16\n12.04: 18")
+        await update.message.reply_text(
+            "Не поняла формат.\n\n"
+            "Пример:\n"
+            "11.04: 15, 16\n"
+            "12.04: 18"
+        )
         return
 
     users_data[user_id] = slots
-    await update.message.reply_text("Принято")
+
+    pretty_slots = sorted(slots, key=lambda x: (x[0], x[1]))
+    lines = [f"{date} {hour:02d}:00" for date, hour in pretty_slots]
+
+    await update.message.reply_text(
+        "Принято:\n" + "\n".join(lines)
+    )
 
 
-async def result(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def result(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not users_data:
         await update.message.reply_text("Пока нет данных")
         return
 
-    counter = {}
+    counter = Counter()
 
-    for user_slots in users_data.values():
-        for slot in user_slots:
-            counter[slot] = counter.get(slot, 0) + 1
+    for slots in users_data.values():
+        counter.update(slots)
 
     sorted_slots = sorted(counter.items(), key=lambda x: (-x[1], x[0][0], x[0][1]))
 
-    text = "Лучшие варианты:\n\n"
+    lines = ["Лучшие варианты:\n"]
+    for i, ((date, hour), count) in enumerate(sorted_slots[:5], start=1):
+        lines.append(f"{i}. {date} {hour:02d}:00 — {count} чел")
 
-    for i, (slot, count) in enumerate(sorted_slots[:5], start=1):
-        date, hour = slot
-        text += f"{i}. {date} {hour}:00 — {count} чел\n"
-
-    await update.message.reply_text(text)
+    await update.message.reply_text("\n".join(lines))
 
 
-def main():
-    app = (
-        ApplicationBuilder()
-        .token(TOKEN)
-        .read_timeout(60)
-        .write_timeout(60)
-        .connect_timeout(60)
-        .pool_timeout(60)
-        .build()
-    )
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("result", result))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("Бот запущен...")
+def main() -> None:
+    app
