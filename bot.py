@@ -1,7 +1,9 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-TOKEN = "8344701601:AAFT9xdoZ1epxzeCoS7ynQe074GnjIGd-so"
+TOKEN = os.getenv("BOT_TOKEN")
+if not TOKEN:
+    raise ValueError("BOT_TOKEN не найден в переменных окружения")
 
 users_data = {}
 
@@ -12,7 +14,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "11.04: 15, 16\n"
         "12.04: 18"
     )
-
 
 def parse_input(text):
     result = set()
