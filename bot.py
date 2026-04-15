@@ -12,7 +12,7 @@ from telegram.ext import (
 
 TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
-    raise ValueError("Token не найден в переменных окружения")
+    raise ValueError("BOT_TOKEN не найден в переменных окружения")
 
 users_data = {}
 
