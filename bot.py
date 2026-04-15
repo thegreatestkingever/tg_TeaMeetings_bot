@@ -12,7 +12,7 @@ from telegram.ext import (
 
 TOKEN = os.getenv("8344701601:AAFT9xdoZ1epxzeCoS7ynQe074GnjIGd-so")
 if not TOKEN:
-    raise ValueError("8344701601:AAFT9xdoZ1epxzeCoS7ynQe074GnjIGd-so не найден в переменных окружения")
+    raise ValueError("Token не найден в переменных окружения")
 
 users_data = {}
 
