@@ -126,7 +126,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 is_new_user = user_id not in users_data
     if is_new_user and len(users_data) >= MAX_USERS:
-        await update.message.reply_text(
+        await 
+update.message.reply_text(
             f"Лимит участников уже достигнут: {MAX_USERS}."
         )
         return
